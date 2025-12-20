@@ -15,46 +15,48 @@ struct HomeView: View {
     @State private var currentBannerPage: Int = 0
     
     var body: some View {
-        ScrollView {
-            VStack(spacing: Spacing.lg) {
-                headerView
-                   
-                // Search Bar
-                SearchBar(text: $searchText) {
-                    router.navigate(to: .search)
-                }
-                .padding(.horizontal, Spacing.screenPadding)
-                   
-                // Loading State
-                if viewModel.loadingState == .loading {
-                    ProgressView()
-                        .padding(.top, 100)
-                } else {
-                    // Banner Slider
-                    if !viewModel.banners.isEmpty {
-                        bannerSection
-                    }
+        ZStack {
+            ScrollView {
+                VStack(spacing: Spacing.lg) {
+                    headerView
                        
-                    // Categories
-                    if !viewModel.categories.isEmpty {
-                        categorySection
+                    // Search Bar
+                    SearchBar(text: $searchText) {
+                        router.navigate(to: .search)
                     }
+                    .padding(.horizontal, Spacing.screenPadding)
                        
-                    // Popular Foods
-                    if !viewModel.foods.isEmpty {
-                        foodSection
+                    // Loading State
+                    if viewModel.loadingState == .loading {
+                        ProgressView()
+                            .padding(.top, 100)
+                    } else {
+                        // Banner Slider
+                        if !viewModel.banners.isEmpty {
+                            bannerSection
+                        }
+                           
+                        // Categories
+                        if !viewModel.categories.isEmpty {
+                            categorySection
+                        }
+                           
+                        // Popular Foods
+                        if !viewModel.foods.isEmpty {
+                            foodSection
+                        }
                     }
-                }
-                   
-                // Error State
-                if case .failure(let error) = viewModel.loadingState {
-                    errorView(message: error)
                 }
             }
-        }
-        .background(Color.background)
-        .refreshable {
-            await viewModel.refresh()
+            .background(Color.background)
+            .refreshable {
+                await viewModel.refresh()
+            }
+            
+            // ✅ Error overlay - di luar ScrollView
+            if case .failure(let error) = viewModel.loadingState {
+                errorOverlay(message: error)
+            }
         }
         .task {
             await viewModel.fetchHomeData()
@@ -223,6 +225,48 @@ struct HomeView: View {
            }
            .padding(.top, 50)
        }
+    
+    private func errorOverlay(message: String) -> some View {
+        ZStack {
+            Color.black.opacity(0.3)
+                .ignoresSafeArea()
+            
+            VStack(spacing: Spacing.md) {
+                Image(systemName: "exclamationmark.triangle")
+                    .font(.system(size: 50))
+                    .foregroundColor(.error)
+                
+                Text("Oops!")
+                    .font(.headlineLarge)
+                    .foregroundColor(.textPrimary)
+                
+                Text(message)
+                    .font(.bodyMedium)
+                    .foregroundColor(.textSecondary)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, Spacing.xl)
+                
+                Button(action: {
+                    Task {
+                        await viewModel.fetchHomeData()
+                    }
+                }) {
+                    Text("Try Again")
+                        .font(.headlineSmall)
+                        .foregroundColor(.white)
+                        .padding(.horizontal, Spacing.xl)
+                        .padding(.vertical, Spacing.md)
+                        .background(Color.primary)
+                        .cornerRadius(Spacing.radiusMedium)
+                }
+            }
+            .padding()
+            .background(Color.white)
+            .cornerRadius(Spacing.radiusLarge)
+            .shadow(radius: 10)
+            .padding(Spacing.xl)
+        }
+    }
 }
 
 #Preview {

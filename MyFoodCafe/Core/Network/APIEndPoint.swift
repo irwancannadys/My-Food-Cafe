@@ -38,6 +38,7 @@ enum APIError: LocalizedError {
     case invalidResponse
     case httpError(Int)
     case decodingError(Error)
+    case cancelled
     case unknown(Error)
     
     var errorDescription: String? {
@@ -50,6 +51,8 @@ enum APIError: LocalizedError {
             return "HTTP Error: \(code)"
         case .decodingError(let error):
             return "Decoding error: \(error.localizedDescription)"
+        case .cancelled:
+            return "Request cancelled"
         case .unknown(let error):
             return "Unknown error: \(error.localizedDescription)"
         }

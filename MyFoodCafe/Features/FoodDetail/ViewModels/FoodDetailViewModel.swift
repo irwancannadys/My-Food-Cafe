@@ -47,6 +47,10 @@ class FoodDetailViewModel: ObservableObject {
         }
     }
     
+    func refresh() async {
+        await fetchFoodDetail()
+    }
+    
     // MARK: - Quantity Actions
     func increaseQuantity() {
         quantity += 1

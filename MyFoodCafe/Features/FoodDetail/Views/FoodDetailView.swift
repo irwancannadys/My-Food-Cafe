@@ -10,14 +10,9 @@ import Kingfisher
 
 struct FoodDetailView: View {
     let food: FoodModel
-    @StateObject private var viewModel: FoodDetailViewModel
     @EnvironmentObject var router: Router
     @Environment(\.dismiss) var dismiss
-    @State private var quantity: Int = 1
-    
-    var totalPrice: Double {
-        food.price * Double(quantity)
-    }
+    @StateObject private var viewModel: FoodDetailViewModel
     
     init(food: FoodModel) {
         self.food = food
@@ -56,28 +51,36 @@ struct FoodDetailView: View {
             }
         }
         .navigationBarHidden(true)
+        .refreshable {
+            await viewModel.refresh()
+        }
         .task {
             await viewModel.fetchFoodDetail()
         }
     }
     
+    // MARK: - Content View
     private func contentView(foodDetail: FoodDetailModel) -> some View {
         ScrollView {
             VStack(spacing: 0) {
                 foodImageSection(imageUrl: foodDetail.imageUrl)
-                
                 VStack(spacing: Spacing.lg) {
                     headerSection(foodDetail: foodDetail)
                     Divider()
                     descriptionSection(foodDetail: foodDetail)
+                    Divider()
+                    ingredientsSection(foodDetail: foodDetail)
+                    Divider()
+                    nutritionSection(foodDetail: foodDetail)
                     Divider()
                     restaurantSection(foodDetail: foodDetail)
                 }
                 .padding(Spacing.screenPadding)
             }
         }
+        .navigationBarHidden(true)
         .safeAreaInset(edge: .bottom) {
-            bottomBar(foodDetail: foodDetail)
+            bottomBar
         }
     }
     
@@ -94,18 +97,36 @@ struct FoodDetailView: View {
                 .frame(height: 300)
                 .clipped()
             
-            Button(action: {
-                dismiss()
-            }) {
-                Image(systemName: "chevron.left")
-                    .font(.title3)
-                    .fontWeight(.semibold)
-                    .foregroundColor(.white)
-                    .frame(width: 40, height: 40)
-                    .background(Color.black.opacity(0.5))
-                    .clipShape(Circle())
+            HStack {
+                // Back button
+                Button(action: {
+                    dismiss()
+                }) {
+                    Image(systemName: "chevron.left")
+                        .font(.title3)
+                        .fontWeight(.semibold)
+                        .foregroundColor(.white)
+                        .frame(width: 40, height: 40)
+                        .background(Color.black.opacity(0.5))
+                        .clipShape(Circle())
+                }
+                .padding(Spacing.md)
+                
+                Spacer()
+                
+                Button(action: {
+                    dismiss()
+                }) {
+                    Image(systemName: "cart.fill")
+                        .font(.title3)
+                        .fontWeight(.semibold)
+                        .foregroundColor(.white)
+                        .frame(width: 40, height: 40)
+                        .background(Color.black.opacity(0.4))
+                        .clipShape(Circle())
+                }
+                .padding(.trailing, Spacing.md)
             }
-            .padding(Spacing.md)
         }
     }
     
@@ -125,23 +146,26 @@ struct FoodDetailView: View {
                     .font(.bodyMedium)
                     .foregroundColor(.textPrimary)
                 
-                Text("(150+ ratings)")
+                Text("(\(foodDetail.totalReviews)+ ratings)")
                     .font(.bodySmall)
                     .foregroundColor(.textSecondary)
             }
             
-            Text("Rp \(Int(foodDetail.price).formatted())")
-                .font(.headlineLarge)
-                .foregroundColor(.primary)
-            
-            HStack(spacing: Spacing.xs) {
-                Image(systemName: "heart")
-                    .foregroundColor(.textPrimary)
-                Text("Make Favorite")
+            HStack {
+                Text("Rp \(Int(foodDetail.price).formatted())")
+                    .font(.headlineLarge)
+                    .foregroundColor(.primary)
+                
+                Spacer()
+                
+                HStack(spacing: Spacing.xs) {
+                    Image(systemName: "clock")
+                        .font(.bodySmall)
+                    Text(foodDetail.deliveryTime)
+                        .font(.bodySmall)
+                }
+                .foregroundColor(.textSecondary)
             }
-            .padding(Spacing.sm)
-            .background(Color.cardBackground)
-            .cornerRadius(Spacing.radiusMedium)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -153,10 +177,55 @@ struct FoodDetailView: View {
                 .font(.headlineMedium)
                 .foregroundColor(.textPrimary)
             
-            Text(foodDetail.description)
+            Text(foodDetail.longDescription)
                 .font(.bodyMedium)
                 .foregroundColor(.textSecondary)
                 .lineSpacing(4)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+    
+    // MARK: - Ingredients Section
+    private func ingredientsSection(foodDetail: FoodDetailModel) -> some View {
+        VStack(alignment: .leading, spacing: Spacing.sm) {
+            Text("Ingredients")
+                .font(.headlineMedium)
+                .foregroundColor(.textPrimary)
+            
+            FlowLayout(spacing: Spacing.xs) {
+                ForEach(foodDetail.ingredients, id: \.self) { ingredient in
+                    Text(ingredient)
+                        .font(.bodySmall)
+                        .foregroundColor(.textPrimary)
+                        .padding(.horizontal, Spacing.sm)
+                        .padding(.vertical, Spacing.xs)
+                        .background(Color.tertiary)
+                        .cornerRadius(Spacing.radiusSmall)
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+    
+    // MARK: - Nutrition Section
+    private func nutritionSection(foodDetail: FoodDetailModel) -> some View {
+        VStack(alignment: .leading, spacing: Spacing.sm) {
+            Text("Nutrition Facts")
+                .font(.headlineMedium)
+                .foregroundColor(.textPrimary)
+            
+            HStack(spacing: Spacing.lg) {
+                NutritionItem(
+                    label: "Calories",
+                    value: "\(foodDetail.nutrition.calories)"
+                )
+                NutritionItem(
+                    label: "Protein",
+                    value: foodDetail.nutrition.protein
+                )
+                NutritionItem(label: "Carbs", value: foodDetail.nutrition.carbs)
+                NutritionItem(label: "Fat", value: foodDetail.nutrition.fat)
+            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -173,9 +242,19 @@ struct FoodDetailView: View {
                     .font(.headlineSmall)
                     .foregroundColor(.textPrimary)
                 
-                Text(foodDetail.category)
+                HStack(spacing: Spacing.xs) {
+                    Image(systemName: "star.fill")
+                        .font(.caption)
+                        .foregroundColor(.warning)
+                    Text(String(format: "%.1f", foodDetail.restaurantRating))
+                        .font(.bodySmall)
+                        .foregroundColor(.textSecondary)
+                }
+                
+                Text(foodDetail.restaurantAddress)
                     .font(.bodySmall)
                     .foregroundColor(.textSecondary)
+                    .lineLimit(1)
             }
             
             Spacer()
@@ -189,7 +268,7 @@ struct FoodDetailView: View {
     }
     
     // MARK: - Bottom Bar
-    private func bottomBar(foodDetail: FoodDetailModel) -> some View {
+    private var bottomBar: some View {
         VStack(spacing: 0) {
             Divider()
             
@@ -201,7 +280,9 @@ struct FoodDetailView: View {
                     }) {
                         Image(systemName: "minus.circle.fill")
                             .font(.title2)
-                            .foregroundColor(viewModel.quantity > 1 ? .primary : .gray)
+                            .foregroundColor(
+                                viewModel.quantity > 1 ? .primary : .gray
+                            )
                     }
                     .disabled(viewModel.quantity <= 1)
                     
@@ -223,8 +304,7 @@ struct FoodDetailView: View {
                 
                 // Add to Cart Button
                 Button(action: {
-                    // TODO: Add to cart logic
-                    print("Added \(viewModel.totalPrice)x \(foodDetail.name) to cart")
+                    viewModel.addToCart()
                 }) {
                     HStack {
                         Image(systemName: "cart.fill")
@@ -243,29 +323,111 @@ struct FoodDetailView: View {
         }
     }
     
+    // MARK: - Error View
     private func errorView(message: String) -> some View {
-            VStack(spacing: Spacing.md) {
-                Image(systemName: "exclamationmark.triangle")
-                    .font(.system(size: 50))
-                    .foregroundColor(.error)
-                
-                Text("Failed to load")
-                    .font(.headlineLarge)
-                
-                Text(message)
-                    .font(.bodyMedium)
-                    .foregroundColor(.textSecondary)
-                    .multilineTextAlignment(.center)
-                
-                Button("Try Again") {
-                    Task {
-                        await viewModel.fetchFoodDetail()
-                    }
+        VStack(spacing: Spacing.md) {
+            Image(systemName: "exclamationmark.triangle")
+                .font(.system(size: 50))
+                .foregroundColor(.error)
+            
+            Text("Failed to load")
+                .font(.headlineLarge)
+            
+            Text(message)
+                .font(.bodyMedium)
+                .foregroundColor(.textSecondary)
+                .multilineTextAlignment(.center)
+            
+            Button("Try Again") {
+                Task {
+                    await viewModel.fetchFoodDetail()
                 }
-                .buttonStyle(.borderedProminent)
             }
-            .padding()
+            .buttonStyle(.borderedProminent)
         }
+        .padding()
+    }
+}
+
+// MARK: - Nutrition Item Component
+struct NutritionItem: View {
+    let label: String
+    let value: String
+    
+    var body: some View {
+        VStack(spacing: Spacing.xxs) {
+            Text(value)
+                .font(.headlineSmall)
+                .foregroundColor(.textPrimary)
+            Text(label)
+                .font(.caption)
+                .foregroundColor(.textSecondary)
+        }
+    }
+}
+
+// MARK: - Flow Layout (for ingredients tags)
+struct FlowLayout: Layout {
+    var spacing: CGFloat = 8
+    
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        let result = FlowResult(
+            in: proposal.replacingUnspecifiedDimensions().width,
+            subviews: subviews,
+            spacing: spacing
+        )
+        return result.size
+    }
+    
+    func placeSubviews(
+        in bounds: CGRect,
+        proposal: ProposedViewSize,
+        subviews: Subviews,
+        cache: inout ()
+    ) {
+        let result = FlowResult(
+            in: bounds.width,
+            subviews: subviews,
+            spacing: spacing
+        )
+        for (index, subview) in subviews.enumerated() {
+            subview
+                .place(
+                    at: CGPoint(
+                        x: bounds.minX + result.positions[index].x,
+                        y: bounds.minY + result.positions[index].y
+                    ),
+                    proposal: .unspecified
+                )
+        }
+    }
+    
+    struct FlowResult {
+        var size: CGSize = .zero
+        var positions: [CGPoint] = []
+        
+        init(in maxWidth: CGFloat, subviews: Subviews, spacing: CGFloat) {
+            var currentX: CGFloat = 0
+            var currentY: CGFloat = 0
+            var lineHeight: CGFloat = 0
+            
+            for subview in subviews {
+                let size = subview.sizeThatFits(.unspecified)
+                
+                if currentX + size.width > maxWidth && currentX > 0 {
+                    currentX = 0
+                    currentY += lineHeight + spacing
+                    lineHeight = 0
+                }
+                
+                positions.append(CGPoint(x: currentX, y: currentY))
+                currentX += size.width + spacing
+                lineHeight = max(lineHeight, size.height)
+            }
+            
+            self.size = CGSize(width: maxWidth, height: currentY + lineHeight)
+        }
+    }
 }
 
 #Preview {
