@@ -53,13 +53,20 @@ struct HomeView: View {
                 await viewModel.refresh()
             }
             
-            // ✅ Error overlay - di luar ScrollView
             if case .failure(let error) = viewModel.loadingState {
                 errorOverlay(message: error)
             }
         }
-        .task {
-            await viewModel.fetchHomeData()
+        .onAppear {
+            print("👀 [HomeView] onAppear triggered - loadingState: \(viewModel.loadingState)")
+            if viewModel.loadingState == .idle {
+                print("👀 [HomeView] State is idle, fetching data...")
+                Task {
+                    await viewModel.fetchHomeData()
+                }
+            } else {
+                print("👀 [HomeView] State is not idle, skipping fetch")
+            }
         }
     }
     
@@ -147,7 +154,7 @@ struct HomeView: View {
                 .padding(.horizontal, Spacing.screenPadding)
                
             ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: Spacing.md) {
+                HStack(spacing: 0) {
                     ForEach(viewModel.categories) { category in
                         CategoryCard(
                             icon: category.icon,
@@ -159,7 +166,7 @@ struct HomeView: View {
                         )
                     }
                 }
-                .padding(.horizontal, Spacing.screenPadding)
+                .padding(.horizontal, Spacing.xs)
             }
         }
     }
@@ -183,7 +190,7 @@ struct HomeView: View {
             .padding(.horizontal, Spacing.screenPadding)
                
             VStack(spacing: Spacing.sm) {
-                ForEach(viewModel.foods) { food in
+                ForEach(viewModel.displayedFoods) { food in
                     FoodCard(food: food) {
                         router.navigate(to: .foodDetail(food))
                     }
