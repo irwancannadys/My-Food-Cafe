@@ -17,30 +17,10 @@ struct MyFoodCafeApp: App {
               NavigationStack(path: $router.path) {
                   ContentView()
                       .navigationDestination(for: Route.self) { route in
-                          destinationView(for: route)
+                          DestinationView.destinationView(for: route)
                       }
               }
               .environmentObject(router)
           }
       }
-    
-    @ViewBuilder
-        func destinationView(for route: Route) -> some View {
-            switch route {
-            case .home:
-                Text("Home")
-            case .search:
-                Text("Search")
-            case .order:
-                Text("Order")
-            case .profile:
-                Text("Profile")
-            case .foodDetail(let food):
-                FoodDetailView(food: food)
-            case .restaurantDetail(let restaurant):
-                Text("Restaurant: \(restaurant.name)")
-            case .cart:
-                Text("Cart")
-            }
-        }
 }

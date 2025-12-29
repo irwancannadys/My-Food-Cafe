@@ -63,7 +63,12 @@ struct FoodDetailView: View {
     private func contentView(foodDetail: FoodDetailModel) -> some View {
         ScrollView {
             VStack(spacing: 0) {
-                foodImageSection(imageUrl: foodDetail.imageUrl)
+                foodImageSection(
+                    imageUrl: foodDetail.imageUrl,
+                    onTap: {
+                        router.navigate(to: .cart)
+                    }
+                )
                 VStack(spacing: Spacing.lg) {
                     headerSection(foodDetail: foodDetail)
                     Divider()
@@ -81,52 +86,6 @@ struct FoodDetailView: View {
         .navigationBarHidden(true)
         .safeAreaInset(edge: .bottom) {
             bottomBar
-        }
-    }
-    
-    // MARK: - Food Image Section
-    private func foodImageSection(imageUrl: String) -> some View {
-        ZStack(alignment: .topLeading) {
-            KFImage(URL(string: imageUrl))
-                .placeholder {
-                    Rectangle()
-                        .fill(Color.gray.opacity(0.2))
-                }
-                .resizable()
-                .aspectRatio(contentMode: .fill)
-                .frame(height: 300)
-                .clipped()
-            
-            HStack {
-                // Back button
-                Button(action: {
-                    dismiss()
-                }) {
-                    Image(systemName: "chevron.left")
-                        .font(.title3)
-                        .fontWeight(.semibold)
-                        .foregroundColor(.white)
-                        .frame(width: 40, height: 40)
-                        .background(Color.black.opacity(0.5))
-                        .clipShape(Circle())
-                }
-                .padding(Spacing.md)
-                
-                Spacer()
-                
-                Button(action: {
-                    dismiss()
-                }) {
-                    Image(systemName: "cart.fill")
-                        .font(.title3)
-                        .fontWeight(.semibold)
-                        .foregroundColor(.white)
-                        .frame(width: 40, height: 40)
-                        .background(Color.black.opacity(0.4))
-                        .clipShape(Circle())
-                }
-                .padding(.trailing, Spacing.md)
-            }
         }
     }
     
@@ -168,6 +127,55 @@ struct FoodDetailView: View {
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+    
+    // MARK: - Food Image Section
+    private func foodImageSection(
+        imageUrl: String,
+        onTap: @escaping () -> Void
+    ) -> some View {
+        ZStack(alignment: .topLeading) {
+            KFImage(URL(string: imageUrl))
+                .placeholder {
+                    Rectangle()
+                        .fill(Color.gray.opacity(0.2))
+                }
+                .resizable()
+                .aspectRatio(contentMode: .fill)
+                .frame(height: 300)
+                .clipped()
+            
+            HStack {
+                // Back button
+                Button(action: {
+                    dismiss()
+                }) {
+                    Image(systemName: "chevron.left")
+                        .font(.title3)
+                        .fontWeight(.semibold)
+                        .foregroundColor(.white)
+                        .frame(width: 40, height: 40)
+                        .background(Color.black.opacity(0.5))
+                        .clipShape(Circle())
+                }
+                .padding(Spacing.md)
+                
+                Spacer()
+                
+                Button(action: {
+                    onTap()
+                }) {
+                    Image(systemName: "cart.fill")
+                        .font(.title3)
+                        .fontWeight(.semibold)
+                        .foregroundColor(.white)
+                        .frame(width: 40, height: 40)
+                        .background(Color.black.opacity(0.4))
+                        .clipShape(Circle())
+                }
+                .padding(.trailing, Spacing.md)
+            }
+        }
     }
     
     // MARK: - Description Section
