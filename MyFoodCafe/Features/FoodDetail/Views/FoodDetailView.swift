@@ -12,7 +12,7 @@ struct FoodDetailView: View {
     let food: FoodModel
     @EnvironmentObject var router: Router
     @Environment(\.dismiss) var dismiss
-    @EnvironmentObject var cartManager: CartManager
+    @EnvironmentObject var cartManager: CartViewModel
     @StateObject private var viewModel: FoodDetailViewModel
     
     init(food: FoodModel) {

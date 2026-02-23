@@ -10,7 +10,7 @@ import Kingfisher
 
 struct CartView: View {
     @Environment(\.dismiss) var dismiss
-    @EnvironmentObject var cartManager: CartManager
+    @EnvironmentObject var cartManager: CartViewModel
     @State private var showClearAlert = false
     
     var body: some View {
@@ -284,6 +284,5 @@ struct CartItemRow: View {
     NavigationStack {
         CartView()
             .environment(\.managedObjectContext, PersistenceController.preview.container.viewContext)
-            .environmentObject(CartManager(context: PersistenceController.preview.container.viewContext))
     }
 }

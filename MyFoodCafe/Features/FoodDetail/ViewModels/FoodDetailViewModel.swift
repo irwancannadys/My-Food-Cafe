@@ -67,7 +67,7 @@ class FoodDetailViewModel: ObservableObject {
     }
     
     // MARK: - Add to Cart
-    func addToCart(cartManager: CartManager) {
+    func addToCart(cartManager: CartViewModel) {
         guard let food = foodDetail else { return }
         cartManager.addToCart(
             foodId: food.id,
