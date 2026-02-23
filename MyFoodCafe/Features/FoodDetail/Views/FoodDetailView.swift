@@ -12,6 +12,7 @@ struct FoodDetailView: View {
     let food: FoodModel
     @EnvironmentObject var router: Router
     @Environment(\.dismiss) var dismiss
+    @EnvironmentObject var cartManager: CartManager
     @StateObject private var viewModel: FoodDetailViewModel
     
     init(food: FoodModel) {
@@ -65,6 +66,7 @@ struct FoodDetailView: View {
             VStack(spacing: 0) {
                 foodImageSection(
                     imageUrl: foodDetail.imageUrl,
+                    cartItemCount: cartManager.totalItems,
                     onTap: {
                         router.navigate(to: .cart)
                     }
@@ -132,6 +134,7 @@ struct FoodDetailView: View {
     // MARK: - Food Image Section
     private func foodImageSection(
         imageUrl: String,
+        cartItemCount: Int,
         onTap: @escaping () -> Void
     ) -> some View {
         ZStack(alignment: .topLeading) {
@@ -165,13 +168,26 @@ struct FoodDetailView: View {
                 Button(action: {
                     onTap()
                 }) {
-                    Image(systemName: "cart.fill")
-                        .font(.title3)
-                        .fontWeight(.semibold)
-                        .foregroundColor(.white)
-                        .frame(width: 40, height: 40)
-                        .background(Color.black.opacity(0.4))
-                        .clipShape(Circle())
+                    ZStack(alignment: .topTrailing) {
+                        Image(systemName: "cart.fill")
+                            .font(.title3)
+                            .fontWeight(.semibold)
+                            .foregroundColor(.white)
+                            .frame(width: 40, height: 40)
+                            .background(Color.black.opacity(0.4))
+                            .clipShape(Circle())
+                                       
+                        if cartItemCount > 0 {
+                            Text("\(cartItemCount)")
+                                .font(.caption2)
+                                .fontWeight(.bold)
+                                .foregroundColor(.white)
+                                .frame(minWidth: 18, minHeight: 18)
+                                .background(Color.red)
+                                .clipShape(Circle())
+                                .offset(x: 8, y: -8)
+                        }
+                    }
                 }
                 .padding(.trailing, Spacing.md)
             }
@@ -312,7 +328,7 @@ struct FoodDetailView: View {
                 
                 // Add to Cart Button
                 Button(action: {
-                    viewModel.addToCart()
+                    viewModel.addToCart(cartManager: cartManager)
                 }) {
                     HStack {
                         Image(systemName: "cart.fill")

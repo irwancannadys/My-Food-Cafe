@@ -15,6 +15,7 @@ class FoodDetailViewModel: ObservableObject {
     @Published var loadingState: LoadingState = .idle
     @Published var errorMessage: String?
     @Published var quantity: Int = 1
+    @Published var showSuccessAlert: Bool = false
     
     // MARK: - Dependencies
     private let repository: FoodRepositoryProtocol
@@ -27,7 +28,10 @@ class FoodDetailViewModel: ObservableObject {
     }
     
     // MARK: - Init
-    init(foodId: String, repository: FoodRepositoryProtocol = FoodRepository()) {
+    init(
+        foodId: String,
+        repository: FoodRepositoryProtocol = FoodRepository()
+    ) {
         self.foodId = foodId
         self.repository = repository
     }
@@ -63,8 +67,18 @@ class FoodDetailViewModel: ObservableObject {
     }
     
     // MARK: - Add to Cart
-    func addToCart() {
-        // TODO: Implement cart logic
+    func addToCart(cartManager: CartManager) {
+        guard let food = foodDetail else { return }
+        cartManager.addToCart(
+            foodId: food.id,
+            name: food.name,
+            price: food.price,
+            quantity: quantity,
+            imageUrl: food.imageUrl,
+            restaurantName: food.restaurantName
+        )
+        quantity = 1
+        showSuccessAlert = true
         print("Added \(quantity)x \(foodDetail?.name ?? "") to cart")
     }
 }

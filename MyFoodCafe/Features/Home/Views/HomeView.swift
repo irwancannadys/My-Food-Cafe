@@ -280,3 +280,4 @@ struct HomeView: View {
     HomeView()
         .environmentObject(Router())
 }
+
