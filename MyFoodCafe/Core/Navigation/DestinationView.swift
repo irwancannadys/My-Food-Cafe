@@ -25,6 +25,8 @@ struct DestinationView {
             Text("Restaurant: \(restaurant.name)")
         case .cart:
             CartView()
+        case .categoryDetail(let id):
+            CategoryDetailView(id: id)
         }
     }
 }

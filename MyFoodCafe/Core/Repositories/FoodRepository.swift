@@ -13,14 +13,20 @@ protocol FoodRepositoryProtocol {
     func getFoodDetail(id: String) async throws -> FoodDetailModel
     func getCategories() async throws -> [CategoryModel]
     func getBanners() async throws -> [BannerModel]
+    func getFoodDetailWithMapper(id: String) async throws -> CategoryFoodDetail
 }
 
 // MARK: - Food Repository Implementation
 class FoodRepository: FoodRepositoryProtocol {
     private let remoteDataSource: FoodDataSourceProtocol
+    private let categoryDataSource: CategoryAlamofireDataSource
     
-    init(remoteDataSource: FoodDataSourceProtocol = FoodRemoteDataSource()) {
+    init(
+        remoteDataSource: FoodDataSourceProtocol = FoodRemoteDataSource(),
+        categoryDataSource: CategoryAlamofireDataSource = CategoryAlamofireDataSource()
+    ) {
         self.remoteDataSource = remoteDataSource
+        self.categoryDataSource = categoryDataSource
     }
     
     func getFoods() async throws -> [FoodModel] {
@@ -37,5 +43,8 @@ class FoodRepository: FoodRepositoryProtocol {
     
     func getBanners() async throws -> [BannerModel] {
         return try await remoteDataSource.fetchBanners()
+    }
+    func getFoodDetailWithMapper(id: String) async throws -> CategoryFoodDetail {
+        return try await categoryDataSource.fetchFoodDetailWithMapper(id: id)
     }
 }

@@ -16,6 +16,7 @@ enum Route: Hashable {
     case foodDetail(FoodModel)
     case restaurantDetail(RestaurantModel)
     case cart
+    case categoryDetail(id: String)
 }
 
 // MARK: - Router

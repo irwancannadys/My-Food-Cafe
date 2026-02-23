@@ -14,6 +14,12 @@ struct HomeView: View {
     @State private var selectedCategory: String = "Popular"
     @State private var currentBannerPage: Int = 0
     
+    private var categoryDetailFoodId: String {
+        return viewModel.displayedFoods.indices.contains(1)
+        ? viewModel.displayedFoods[1].id
+        : ""
+    }
+    
     var body: some View {
         ZStack {
             ScrollView {
@@ -162,6 +168,7 @@ struct HomeView: View {
                             isSelected: selectedCategory == category.name,
                             action: {
                                 selectedCategory = category.name
+                                router.navigate(to: .categoryDetail(id: categoryDetailFoodId))
                             }
                         )
                     }
@@ -191,6 +198,7 @@ struct HomeView: View {
                
             VStack(spacing: Spacing.sm) {
                 ForEach(viewModel.displayedFoods) { food in
+//                    getDummyIdForCategory(id: food.id)
                     FoodCard(food: food) {
                         router.navigate(to: .foodDetail(food))
                     }
